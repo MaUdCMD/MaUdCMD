@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start Code</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        /* Стили для экрана выбора редакторов */
+        .selection-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            padding: 20px;
+        }
+        
+        .selection-title {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: #8a2be2;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+        }
+        
+        .editors-selection {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .editor-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #2d2d2d;
+            width: 150px;
+        }
+        
+        .editor-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .editor-option.selected {
+            border-color: #8a2be2;
+            box-shadow: 0 0 15px rgba(138, 43, 226, 0.7);
+            background-color: rgba(138, 43, 226, 0.1);
+        }
+        
+        .editor-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #8a2be2;
+        }
+        
+        .editor-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .continue-btn {
+            padding: 12px 40px;
+            background-color: #8a2be2;
+            color: #ffffff;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(138, 43, 226, 0.5);
+        }
+        
+        .continue-btn:hover {
+            background-color: #6a1bb5;
+            box-shadow: 0 0 20px rgba(138, 43, 226, 0.8);
+            transform: scale(1.05);
+        }
+        
+        .continue-btn:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        
+        /* Стили для основного редактора */
+        .editor-screen {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #1a1a1a;
+        }
+        
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #2d2d2d;
+            border-bottom: 2px solid #8a2be2;
+            box-shadow: 0 0 10px rgba(138, 43, 226, 0.3);
+        }
+        
+        .editor-title {
+            font-size: 1.5rem;
+            color: #8a2be2;
+            font-weight: bold;
+        }
+        
+        .editor-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .code-panel {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            border-right: 2px solid #333;
+        }
+        
+        .editor-tabs {
+            display: flex;
+            background-color: #2d2d2d;
+            border-bottom: 1px solid #444;
+        }
+        
+        .editor-tab {
+            padding: 12px 20px;
+            background-color: #2d2d2d;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            border-right: 1px solid #444;
+            transition: all 0.2s ease;
+        }
+        
+        .editor-tab.active {
+            background-color: #1a1a1a;
+            color: #8a2be2;
+            border-bottom: 2px solid #8a2be2;
+        }
+        
+        .editor-container {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+        }
+        
+        .editor-container.active {
+            display: flex;
+        }
+        
+        .code-editor {
+            flex: 1;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            border: none;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            border: 2px solid #333;
+            border-radius: 5px;
+            margin: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .code-editor:focus {
+            border-color: #8a2be2;
+            box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+        }
+        
+        .run-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 30px;
+            background-color: #8a2be2;
+            color: #ffffff;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(138, 43, 226, 0.7);
+            z-index: 100;
+        }
+        
+        .run-button:hover {
+            background-color: #6a1bb5;
+            box-shadow: 0 0 25px rgba(138, 43, 226, 0.9);
+            transform: scale(1.05);
+        }
+        
+        /* Стили для полноэкранного предпросмотра */
+        .preview-fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #2d2d2d;
+            border-bottom: 2px solid #8a2be2;
+            box-shadow: 0 0 10px rgba(138, 43, 226, 0.3);
+        }
+        
+        .preview-title {
+            font-size: 1.5rem;
+            color: #8a2be2;
+            font-weight: bold;
+        }
+        
+        .close-preview {
+            padding: 8px 16px;
+            background-color: #8a2be2;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .preview-frame {
+            width: 100%;
+            height: calc(100% - 60px);
+            border: none;
+            background-color: white;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Экран выбора редакторов -->
+    <div class="selection-screen" id="selectionScreen">
+        <h1 class="selection-title">Какие редакторы вам нужны?</h1>
+        
+        <div class="editors-selection">
+            <div class="editor-option" data-editor="html">
+                <div class="editor-icon">{ }</div>
+                <div class="editor-name">HTML</div>
+            </div>
+            
+            <div class="editor-option" data-editor="css">
+                <div class="editor-icon">#</div>
+                <div class="editor-name">CSS</div>
+            </div>
+            
+            <div class="editor-option" data-editor="js">
+                <div class="editor-icon">( )</div>
+                <div class="editor-name">JavaScript</div>
+            </div>
+        </div>
+        
+        <button class="continue-btn" id="continueBtn" disabled>Продолжить</button>
+    </div>
+    
+    <!-- Основной редактор -->
+    <div class="editor-screen" id="editorScreen">
+        <div class="editor-header">
+            <div class="editor-title">Start Code</div>
+        </div>
+        
+        <div class="editor-layout">
+            <div class="code-panel">
+                <div class="editor-tabs" id="editorTabs">
+                    <!-- Вкладки будут добавлены динамически -->
+                </div>
+                
+                <div class="editor-container active" id="html-editor">
+                    <textarea class="code-editor" id="html-code" placeholder="Введите HTML код"></textarea>
+                </div>
+                
+                <div class="editor-container" id="css-editor">
+                    <textarea class="code-editor" id="css-code" placeholder="Введите CSS код"></textarea>
+                </div>
+                
+                <div class="editor-container" id="js-editor">
+                    <textarea class="code-editor" id="js-code" placeholder="Введите JavaScript код"></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <button class="run-button" id="runButton">Запустить</button>
+    </div>
+    
+    <!-- Полноэкранный предпросмотр -->
+    <div class="preview-fullscreen" id="previewFullscreen">
+        <div class="preview-header">
+            <div class="preview-title">Результат</div>
+            <button class="close-preview" id="closePreview">Закрыть</button>
+        </div>
+        <iframe class="preview-frame" id="preview"></iframe>
+    </div>
+
+    <script>
+        // Данные о выбранных редакторах
+        const selectedEditors = {
+            html: false,
+            css: false,
+            js: false
+        };
+        
+        // Элементы DOM
+        const selectionScreen = document.getElementById('selectionScreen');
+        const editorScreen = document.getElementById('editorScreen');
+        const continueBtn = document.getElementById('continueBtn');
+        const editorTabs = document.getElementById('editorTabs');
+        const runButton = document.getElementById('runButton');
+        const previewFullscreen = document.getElementById('previewFullscreen');
+        const preview = document.getElementById('preview');
+        const closePreview = document.getElementById('closePreview');
+        
+        // Обработчики выбора редакторов
+        document.querySelectorAll('.editor-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const editor = this.dataset.editor;
+                selectedEditors[editor] = !selectedEditors[editor];
+                this.classList.toggle('selected');
+                
+                // Проверяем, выбран ли хотя бы один редактор
+                const hasSelection = Object.values(selectedEditors).some(val => val);
+                continueBtn.disabled = !hasSelection;
+            });
+        });
+        
+        // Обработчик кнопки "Продолжить"
+        continueBtn.addEventListener('click', function() {
+            selectionScreen.style.display = 'none';
+            editorScreen.style.display = 'flex';
+            
+            // Создаем вкладки для выбранных редакторов
+            createEditorTabs();
+            
+            // Показываем первый выбранный редактор
+            showFirstSelectedEditor();
+        });
+        
+        // Создание вкладок для выбранных редакторов
+        function createEditorTabs() {
+            editorTabs.innerHTML = '';
+            
+            if (selectedEditors.html) {
+                const htmlTab = document.createElement('button');
+                htmlTab.className = 'editor-tab active';
+                htmlTab.textContent = 'HTML';
+                htmlTab.dataset.editor = 'html';
+                htmlTab.addEventListener('click', switchEditorTab);
+                editorTabs.appendChild(htmlTab);
+            }
+            
+            if (selectedEditors.css) {
+                const cssTab = document.createElement('button');
+                cssTab.className = 'editor-tab';
+                cssTab.textContent = 'CSS';
+                cssTab.dataset.editor = 'css';
+                cssTab.addEventListener('click', switchEditorTab);
+                editorTabs.appendChild(cssTab);
+            }
+            
+            if (selectedEditors.js) {
+                const jsTab = document.createElement('button');
+                jsTab.className = 'editor-tab';
+                jsTab.textContent = 'JavaScript';
+                jsTab.dataset.editor = 'js';
+                jsTab.addEventListener('click', switchEditorTab);
+                editorTabs.appendChild(jsTab);
+            }
+        }
+        
+        // Переключение между вкладками редакторов
+        function switchEditorTab() {
+            // Убираем активный класс у всех вкладок
+            document.querySelectorAll('.editor-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Добавляем активный класс текущей вкладке
+            this.classList.add('active');
+            
+            // Скрываем все редакторы
+            document.querySelectorAll('.editor-container').forEach(editor => {
+                editor.classList.remove('active');
+            });
+            
+            // Показываем выбранный редактор
+            const editorId = `${this.dataset.editor}-editor`;
+            document.getElementById(editorId).classList.add('active');
+        }
+        
+        // Показ первого выбранного редактора
+        function showFirstSelectedEditor() {
+            if (selectedEditors.html) {
+                document.getElementById('html-editor').classList.add('active');
+            } else if (selectedEditors.css) {
+                document.getElementById('css-editor').classList.add('active');
+            } else if (selectedEditors.js) {
+                document.getElementById('js-editor').classList.add('active');
+            }
+        }
+        
+        // Запуск кода и показ полноэкранного предпросмотра
+        function runCode() {
+            const htmlCode = selectedEditors.html ? document.getElementById('html-code').value : '';
+            const cssCode = selectedEditors.css ? document.getElementById('css-code').value : '';
+            const jsCode = selectedEditors.js ? document.getElementById('js-code').value : '';
+            
+            const previewDocument = preview.contentDocument || preview.contentWindow.document;
+            
+            // Создаем HTML страницу с нашим кодом
+            const fullHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <style>${cssCode}</style>
+                </head>
+                <body>
+                    ${htmlCode || '<div style="padding: 20px; text-align: center; color: #333;">Напишите HTML код для отображения результата</div>'}
+                    <script>${jsCode}<\/script>
+                </body>
+                </html>
+            `;
+            
+            previewDocument.open();
+            previewDocument.write(fullHtml);
+            previewDocument.close();
+            
+            // Показываем полноэкранный предпросмотр
+            previewFullscreen.style.display = 'block';
+        }
+        
+        // Обработчик кнопки "Запустить"
+        runButton.addEventListener('click', runCode);
+        
+        // Обработчик кнопки закрытия предпросмотра
+        closePreview.addEventListener('click', function() {
+            previewFullscreen.style.display = 'none';
+        });
+        
+        // Закрытие предпросмотра по нажатию Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && previewFullscreen.style.display === 'block') {
+                previewFullscreen.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
