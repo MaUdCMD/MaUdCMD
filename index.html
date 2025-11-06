@@ -184,7 +184,7 @@
         .code-editor {
             flex: 1;
             background: #1e1e1e;
-            color: transparent;
+            color: #ffffff;
             border: none;
             padding: 15px;
             font-family: 'Courier New', monospace;
@@ -208,7 +208,7 @@
             left: 10px;
             right: 10px;
             bottom: 10px;
-            background: #1e1e1e;
+            background: transparent;
             pointer-events: none;
             z-index: 1;
             padding: 15px;
@@ -429,15 +429,15 @@
             <div class="code-panel">
                 <div class="editor-tabs" id="editorTabs"></div>
                 <div class="editor-container" id="html-editor">
-                    <textarea class="code-editor" id="html-code" spellcheck="false"></textarea>
+                    <textarea class="code-editor" id="html-code" spellcheck="false" placeholder="Введите HTML код"></textarea>
                     <div class="code-highlight" id="html-highlight"></div>
                 </div>
                 <div class="editor-container" id="css-editor">
-                    <textarea class="code-editor" id="css-code" spellcheck="false"></textarea>
+                    <textarea class="code-editor" id="css-code" spellcheck="false" placeholder="Введите CSS код"></textarea>
                     <div class="code-highlight" id="css-highlight"></div>
                 </div>
                 <div class="editor-container" id="js-editor">
-                    <textarea class="code-editor" id="js-code" spellcheck="false"></textarea>
+                    <textarea class="code-editor" id="js-code" spellcheck="false" placeholder="Введите JavaScript код"></textarea>
                     <div class="code-highlight" id="js-highlight"></div>
                 </div>
             </div>
@@ -469,19 +469,14 @@
     </div>
 
     <script>
-        // Простая и надежная инициализация
-        console.log('Start Code initialization started');
-        
-        const selectedEditors = {
-            html: false,
-            css: false, 
-            js: false
-        };
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectedEditors = {
+                html: false,
+                css: false, 
+                js: false
+            };
 
-        // Функция для инициализации при полной загрузке страницы
-        function initializeApp() {
-            console.log('Initializing app...');
-            
             const selectionScreen = document.getElementById('selectionScreen');
             const editorScreen = document.getElementById('editorScreen');
             const continueBtn = document.getElementById('continueBtn');
@@ -496,42 +491,20 @@
             const clearConsole = document.getElementById('clearConsole');
             const copyConsole = document.getElementById('copyConsole');
 
-            // Проверяем, что все элементы найдены
-            if (!selectionScreen || !continueBtn) {
-                console.error('Critical elements not found');
-                return;
-            }
-
-            console.log('All elements found, setting up event listeners');
-
-            // Обработчики выбора редакторов - ПРОСТАЯ ВЕРСИЯ
-            const editorOptions = document.querySelectorAll('.editor-option');
-            console.log('Found editor options:', editorOptions.length);
-            
-            editorOptions.forEach(option => {
+            // Обработчики выбора редакторов
+            document.querySelectorAll('.editor-option').forEach(option => {
                 option.addEventListener('click', function() {
-                    console.log('Editor option clicked:', this.getAttribute('data-editor'));
                     const editor = this.getAttribute('data-editor');
-                    
-                    // Переключаем состояние
                     selectedEditors[editor] = !selectedEditors[editor];
-                    
-                    // Переключаем класс
                     this.classList.toggle('selected');
                     
-                    console.log('Current selection:', selectedEditors);
-                    
-                    // Проверяем, выбран ли хотя бы один редактор
                     const hasSelection = Object.values(selectedEditors).some(val => val);
                     continueBtn.disabled = !hasSelection;
-                    
-                    console.log('Continue button disabled:', continueBtn.disabled);
                 });
             });
 
             // Обработчик кнопки "Продолжить"
             continueBtn.addEventListener('click', function() {
-                console.log('Continue button clicked');
                 selectionScreen.style.display = 'none';
                 editorScreen.style.display = 'flex';
                 createEditorTabs();
@@ -540,7 +513,6 @@
             });
 
             function createEditorTabs() {
-                console.log('Creating editor tabs');
                 editorTabs.innerHTML = '';
                 const editorsOrder = ['html', 'css', 'js'];
                 
@@ -580,7 +552,7 @@
                     editor.classList.remove('active');
                 });
                 
-                const editorId = `${this.getAttribute('data-editor')}-editor`;
+                const editorId = this.getAttribute('data-editor') + '-editor';
                 document.getElementById(editorId).classList.add('active');
             }
 
@@ -596,7 +568,7 @@
                                 break;
                             }
                         }
-                        document.getElementById(`${editor}-editor`).classList.add('active');
+                        document.getElementById(editor + '-editor').classList.add('active');
                         break;
                     }
                 }
@@ -606,8 +578,8 @@
                 const editors = ['html', 'css', 'js'];
                 
                 editors.forEach(editor => {
-                    const textarea = document.getElementById(`${editor}-code`);
-                    const highlight = document.getElementById(`${editor}-highlight`);
+                    const textarea = document.getElementById(editor + '-code');
+                    const highlight = document.getElementById(editor + '-highlight');
                     
                     if (textarea && highlight) {
                         const updateHighlight = () => {
@@ -653,7 +625,12 @@
                 
                 const previewDocument = preview.contentDocument || preview.contentWindow.document;
                 
+                // Очищаем и добавляем начальное сообщение в консоль
                 consoleOutput.innerHTML = '';
+                const startMessage = document.createElement('div');
+                startMessage.className = 'console-line console-log';
+                startMessage.textContent = 'Начало консоли';
+                consoleOutput.appendChild(startMessage);
                 
                 const fullHtml = `
                     <!DOCTYPE html>
@@ -673,6 +650,9 @@
                     <body>
                         ${htmlCode || '<div style="text-align: center; padding: 50px; color: #666;">Напишите HTML код</div>'}
                         <script>
+                            // Добавляем тестовое сообщение в консоль
+                            console.log('Код выполнен успешно!');
+                            
                             const sendToParent = (type, args) => {
                                 window.parent.postMessage({
                                     type: 'console',
@@ -744,8 +724,9 @@
                 previewFullscreen.style.display = 'block';
             }
 
+            // Обработчик сообщений из iframe
             window.addEventListener('message', function(e) {
-                if (e.data.type === 'console') {
+                if (e.data && e.data.type === 'console') {
                     const timestamp = new Date().toLocaleTimeString();
                     const line = document.createElement('div');
                     line.className = 'console-line console-' + e.data.method;
@@ -780,6 +761,8 @@
                     setTimeout(() => {
                         copyConsole.textContent = originalText;
                     }, 2000);
+                }).catch(err => {
+                    console.error('Ошибка копирования:', err);
                 });
             });
             
@@ -790,16 +773,7 @@
                     consoleToggle.classList.remove('active');
                 }
             });
-
-            console.log('App initialization completed successfully');
-        }
-
-        // Запускаем инициализацию когда страница полностью загружена
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeApp);
-        } else {
-            initializeApp();
-        }
+        });
     </script>
 </body>
 </html>
