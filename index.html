@@ -11,7 +11,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Courier New', monospace;
         }
         
         body {
@@ -35,10 +35,17 @@
         
         .selection-title {
             font-size: 2.5rem;
-            margin-bottom: 2rem;
+            margin-bottom: 0.5rem;
             color: #8a2be2;
             text-align: center;
             text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+        }
+        
+        .selection-subtitle {
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            color: #aaa;
+            text-align: center;
         }
         
         .editors-selection {
@@ -131,6 +138,66 @@
             font-size: 1.5rem;
             color: #8a2be2;
             font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .line-search-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .line-search-input {
+            padding: 8px 12px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 0.9rem;
+            width: 150px;
+        }
+        
+        .line-search-input::placeholder {
+            color: #888;
+        }
+        
+        .line-search-btn {
+            padding: 8px 16px;
+            background: #8a2be2;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .line-search-btn:hover {
+            background: #6a1bb5;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: #ff4444;
+            color: #fff;
+            border-radius: 5px;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
         }
         
         .editor-layout {
@@ -143,7 +210,6 @@
             display: flex;
             flex-direction: column;
             flex: 1;
-            border-right: 2px solid #333;
         }
         
         .editor-tabs {
@@ -162,6 +228,9 @@
             border-right: 1px solid #444;
             transition: all 0.2s ease;
             white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .editor-tab.active {
@@ -173,17 +242,69 @@
         .editor-container {
             flex: 1;
             display: none;
-            flex-direction: column;
             position: relative;
         }
         
         .editor-container.active {
+            display: block;
+        }
+        
+        .editor-wrapper {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
             display: flex;
+            background: #1e1e1e;
+            border: 2px solid #333;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .line-numbers {
+            background: #1e1e1e;
+            color: #6a6a6a;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 21px;
+            padding: 15px 8px 15px 15px;
+            border-right: 1px solid #333;
+            text-align: right;
+            user-select: none;
+            overflow: hidden;
+            width: 60px;
+            flex-shrink: 0;
+        }
+        
+        .line-number {
+            height: 21px;
+            display: block;
+        }
+        
+        .line-number.highlighted {
+            background: rgba(138, 43, 226, 0.3);
+            color: #8a2be2;
+            font-weight: bold;
+        }
+        
+        .editor-content {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .code-input-container {
+            position: relative;
+            flex: 1;
+            overflow: auto;
         }
         
         .code-editor {
-            flex: 1;
-            background: #1e1e1e;
+            width: 100%;
+            height: 100%;
+            background: transparent;
             color: #ffffff;
             border: none;
             padding: 15px;
@@ -191,39 +312,77 @@
             font-size: 14px;
             resize: none;
             outline: none;
-            border: 2px solid #333;
-            border-radius: 5px;
-            margin: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-            position: relative;
-            z-index: 2;
+            line-height: 21px;
             tab-size: 4;
             caret-color: #fff;
-            line-height: 1.5;
+            position: relative;
+            z-index: 2;
+            overflow: auto;
+            white-space: pre;
         }
         
         .code-highlight {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            bottom: 10px;
-            background: transparent;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #1e1e1e;
             pointer-events: none;
-            z-index: 1;
             padding: 15px;
             font-family: 'Courier New', monospace;
             font-size: 14px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
+            line-height: 21px;
+            white-space: pre;
             overflow: hidden;
-            line-height: 1.5;
-            border-radius: 5px;
+            z-index: 1;
         }
         
-        .code-editor:focus {
+        .code-line {
+            display: block;
+            min-height: 21px;
+        }
+        
+        .code-line.highlighted {
+            background: rgba(138, 43, 226, 0.3) !important;
+            animation: lineHighlight 4s ease-in-out;
+        }
+        
+        @keyframes lineHighlight {
+            0% { background: rgba(138, 43, 226, 0.8); }
+            70% { background: rgba(138, 43, 226, 0.3); }
+            100% { background: transparent; }
+        }
+        
+        .editor-wrapper:focus-within {
             border-color: #8a2be2;
             box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+        }
+        
+        .clear-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff4444;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+            z-index: 4;
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+        
+        .editor-wrapper:hover .clear-btn {
+            opacity: 1;
+        }
+        
+        .clear-btn:hover {
+            background: #ff6666;
+            transform: scale(1.05);
         }
         
         .run-button {
@@ -267,7 +426,6 @@
             padding: 15px 20px;
             background: #2d2d2d;
             border-bottom: 2px solid #8a2be2;
-            box-shadow: 0 0 10px rgba(138, 43, 226, 0.3);
         }
         
         .preview-title {
@@ -296,7 +454,6 @@
         
         .console-btn.active {
             background: #6a1bb5;
-            box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
         }
         
         .close-preview {
@@ -323,11 +480,11 @@
         }
         
         .console-panel {
-            height: 300px;
             background: #1e1e1e;
             border-top: 2px solid #8a2be2;
             display: none;
             flex-direction: column;
+            height: 300px;
         }
         
         .console-panel.active {
@@ -348,6 +505,38 @@
         .console-controls {
             display: flex;
             gap: 10px;
+            align-items: center;
+        }
+        
+        .console-filter {
+            padding: 4px 8px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 3px;
+            color: #fff;
+            font-size: 0.8rem;
+            width: 150px;
+        }
+        
+        .console-levels {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .level-btn {
+            padding: 4px 8px;
+            background: #444;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            opacity: 0.6;
+        }
+        
+        .level-btn.active {
+            opacity: 1;
+            background: #8a2be2;
         }
         
         .console-btn-small {
@@ -360,17 +549,12 @@
             font-size: 0.8rem;
         }
         
-        .console-btn-small:hover {
-            background: #555;
-        }
-        
         .console-output {
             flex: 1;
             padding: 10px;
             overflow-y: auto;
             font-family: 'Courier New', monospace;
             font-size: 13px;
-            color: #00ff00;
             background: #1a1a1a;
             white-space: pre-wrap;
         }
@@ -378,32 +562,21 @@
         .console-line {
             margin: 2px 0;
             line-height: 1.4;
+            padding: 2px 5px;
+            border-radius: 3px;
         }
         
-        .console-log {
-            color: #fff;
-        }
-        
-        .console-error {
-            color: #ff4444;
-        }
-        
-        .console-warn {
-            color: #ffaa00;
-        }
-        
-        .console-info {
-            color: #8888ff;
-        }
-        
-        .console-debug {
-            color: #888888;
+        .console-timestamp {
+            color: #666;
+            font-size: 0.75rem;
+            margin-right: 10px;
         }
     </style>
 </head>
 <body>
     <div class="selection-screen" id="selectionScreen">
         <h1 class="selection-title">Какие редакторы вам нужны?</h1>
+        <div class="selection-subtitle">можно выбрать несколько</div>
         <div class="editors-selection">
             <div class="editor-option" data-editor="html">
                 <div class="editor-icon">{ }</div>
@@ -423,22 +596,61 @@
     
     <div class="editor-screen" id="editorScreen">
         <div class="editor-header">
-            <div class="editor-title">Start Code</div>
+            <div class="editor-title">
+                Start Code
+                <div class="line-search-container">
+                    <input type="text" class="line-search-input" id="lineSearchInput" placeholder="Номер строки" maxlength="4">
+                    <button class="line-search-btn" id="lineSearchBtn">Найти</button>
+                </div>
+            </div>
         </div>
         <div class="editor-layout">
             <div class="code-panel">
                 <div class="editor-tabs" id="editorTabs"></div>
+                
                 <div class="editor-container" id="html-editor">
-                    <textarea class="code-editor" id="html-code" spellcheck="false" placeholder="Введите HTML код"></textarea>
-                    <div class="code-highlight" id="html-highlight"></div>
+                    <div class="editor-wrapper">
+                        <div class="line-numbers" id="html-line-numbers">
+                            <span class="line-number">1</span>
+                        </div>
+                        <div class="editor-content">
+                            <div class="code-input-container">
+                                <textarea class="code-editor" id="html-code" spellcheck="false" placeholder="Введите HTML код"></textarea>
+                                <div class="code-highlight" id="html-highlight"></div>
+                            </div>
+                            <button class="clear-btn" data-editor="html">🗑️ Очистить</button>
+                        </div>
+                    </div>
                 </div>
+                
                 <div class="editor-container" id="css-editor">
-                    <textarea class="code-editor" id="css-code" spellcheck="false" placeholder="Введите CSS код"></textarea>
-                    <div class="code-highlight" id="css-highlight"></div>
+                    <div class="editor-wrapper">
+                        <div class="line-numbers" id="css-line-numbers">
+                            <span class="line-number">1</span>
+                        </div>
+                        <div class="editor-content">
+                            <div class="code-input-container">
+                                <textarea class="code-editor" id="css-code" spellcheck="false" placeholder="Введите CSS код"></textarea>
+                                <div class="code-highlight" id="css-highlight"></div>
+                            </div>
+                            <button class="clear-btn" data-editor="css">🗑️ Очистить</button>
+                        </div>
+                    </div>
                 </div>
+                
                 <div class="editor-container" id="js-editor">
-                    <textarea class="code-editor" id="js-code" spellcheck="false" placeholder="Введите JavaScript код"></textarea>
-                    <div class="code-highlight" id="js-highlight"></div>
+                    <div class="editor-wrapper">
+                        <div class="line-numbers" id="js-line-numbers">
+                            <span class="line-number">1</span>
+                        </div>
+                        <div class="editor-content">
+                            <div class="code-input-container">
+                                <textarea class="code-editor" id="js-code" spellcheck="false" placeholder="Введите JavaScript код"></textarea>
+                                <div class="code-highlight" id="js-highlight"></div>
+                            </div>
+                            <button class="clear-btn" data-editor="js">🗑️ Очистить</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -459,8 +671,13 @@
                 <div class="console-header">
                     Консоль
                     <div class="console-controls">
+                        <input type="text" class="console-filter" id="consoleFilter" placeholder="Фильтр...">
+                        <div class="console-levels">
+                            <button class="level-btn active" data-level="all">All</button>
+                            <button class="level-btn active" data-level="log">Log</button>
+                            <button class="level-btn active" data-level="error">Error</button>
+                        </div>
                         <button class="console-btn-small" id="clearConsole">Очистить</button>
-                        <button class="console-btn-small" id="copyConsole">Копировать</button>
                     </div>
                 </div>
                 <div class="console-output" id="consoleOutput"></div>
@@ -468,15 +685,11 @@
         </div>
     </div>
 
-    <script>
-        // Инициализация при загрузке
-        document.addEventListener('DOMContentLoaded', function() {
-            const selectedEditors = {
-                html: false,
-                css: false, 
-                js: false
-            };
+    <div class="notification" id="notification">Строка не найдена</div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Основные элементы
             const selectionScreen = document.getElementById('selectionScreen');
             const editorScreen = document.getElementById('editorScreen');
             const continueBtn = document.getElementById('continueBtn');
@@ -489,289 +702,389 @@
             const consolePanel = document.getElementById('consolePanel');
             const consoleOutput = document.getElementById('consoleOutput');
             const clearConsole = document.getElementById('clearConsole');
-            const copyConsole = document.getElementById('copyConsole');
+            const lineSearchInput = document.getElementById('lineSearchInput');
+            const lineSearchBtn = document.getElementById('lineSearchBtn');
+            const notification = document.getElementById('notification');
 
-            // Обработчики выбора редакторов
+            // Состояние приложения
+            const selectedEditors = { html: false, css: false, js: false };
+            const consoleState = {
+                logs: [],
+                activeLevels: new Set(['all', 'log', 'error']),
+                filterText: ''
+            };
+
+            // ПРАВИЛЬНЫЙ ПОДСЧЁТ СТРОК
+            function updateLineNumbers(editorType) {
+                const textarea = document.getElementById(editorType + '-code');
+                const lineNumbers = document.getElementById(editorType + '-line-numbers');
+                
+                if (!textarea || !lineNumbers) return;
+
+                const lines = textarea.value.split('\n');
+                const lineCount = Math.max(1, lines.length);
+                
+                lineNumbers.innerHTML = '';
+                
+                for (let i = 1; i <= lineCount; i++) {
+                    const lineNumber = document.createElement('span');
+                    lineNumber.className = 'line-number';
+                    lineNumber.textContent = i;
+                    lineNumber.setAttribute('data-line-number', i);
+                    lineNumbers.appendChild(lineNumber);
+                }
+            }
+
+            // Инициализация редакторов
+            function initializeEditor(editorType) {
+                const textarea = document.getElementById(editorType + '-code');
+                const highlight = document.getElementById(editorType + '-highlight');
+                
+                if (!textarea || !highlight) return;
+
+                // Функция обновления редактора
+                const updateEditor = () => {
+                    // Обновление нумерации строк
+                    updateLineNumbers(editorType);
+                    
+                    // Подсветка синтаксиса
+                    let code = textarea.value;
+                    let highlightedCode = code;
+                    
+                    try {
+                        if (editorType === 'html') {
+                            highlightedCode = hljs.highlight(code, { language: 'xml' }).value;
+                        } else if (editorType === 'css') {
+                            highlightedCode = hljs.highlight(code, { language: 'css' }).value;
+                        } else if (editorType === 'js') {
+                            highlightedCode = hljs.highlight(code, { language: 'javascript' }).value;
+                        }
+                    } catch (e) {
+                        // Если подсветка не сработала, используем обычный текст
+                    }
+                    
+                    highlight.innerHTML = highlightedCode.split('\n')
+                        .map(line => `<div class="code-line">${line || ' '}</div>`)
+                        .join('');
+                };
+
+                // Обработчики событий
+                textarea.addEventListener('input', updateEditor);
+                
+                textarea.addEventListener('scroll', () => {
+                    highlight.scrollTop = textarea.scrollTop;
+                    highlight.scrollLeft = textarea.scrollLeft;
+                    const lineNumbers = document.getElementById(editorType + '-line-numbers');
+                    if (lineNumbers) {
+                        lineNumbers.scrollTop = textarea.scrollTop;
+                    }
+                });
+
+                textarea.addEventListener('keydown', function(e) {
+                    if (e.key === 'Tab') {
+                        e.preventDefault();
+                        const start = this.selectionStart;
+                        const end = this.selectionEnd;
+                        this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
+                        this.selectionStart = this.selectionEnd = start + 4;
+                        updateEditor();
+                    }
+                });
+
+                // Инициализация
+                updateEditor();
+            }
+
+            // ПРАВИЛЬНЫЙ ПОИСК СТРОКИ
+            function searchLine() {
+                const lineNumber = parseInt(lineSearchInput.value);
+                
+                if (isNaN(lineNumber) || lineNumber < 1) {
+                    showNotification('Введите корректный номер строки');
+                    return;
+                }
+
+                const activeTab = document.querySelector('.editor-tab.active');
+                if (!activeTab) {
+                    showNotification('Сначала выберите редактор');
+                    return;
+                }
+
+                const editorType = activeTab.getAttribute('data-editor');
+                const textarea = document.getElementById(editorType + '-code');
+                const highlight = document.getElementById(editorType + '-highlight');
+                const lineNumbers = document.getElementById(editorType + '-line-numbers');
+                
+                if (!textarea || !highlight || !lineNumbers) return;
+
+                const lines = textarea.value.split('\n');
+                
+                if (lineNumber > lines.length) {
+                    showNotification(`Строка ${lineNumber} не найдена. Всего строк: ${lines.length}`);
+                    return;
+                }
+
+                // Сброс предыдущих выделений
+                clearHighlights();
+
+                // Выделение номера строки
+                const lineNumberElement = lineNumbers.querySelector(`[data-line-number="${lineNumber}"]`);
+                if (lineNumberElement) {
+                    lineNumberElement.classList.add('highlighted');
+                }
+
+                // Выделение кода в строке
+                const codeLines = highlight.querySelectorAll('.code-line');
+                if (codeLines[lineNumber - 1]) {
+                    codeLines[lineNumber - 1].classList.add('highlighted');
+                }
+
+                // Прокрутка к строке
+                const lineHeight = 21;
+                const scrollPosition = (lineNumber - 3) * lineHeight;
+                
+                textarea.scrollTop = Math.max(0, scrollPosition);
+                highlight.scrollTop = Math.max(0, scrollPosition);
+                lineNumbers.scrollTop = Math.max(0, scrollPosition);
+
+                // Автоматическое снятие выделения через 4 секунды
+                setTimeout(() => {
+                    clearHighlights();
+                }, 4000);
+
+                showNotification(`Найдена строка ${lineNumber}`);
+            }
+
+            function clearHighlights() {
+                // Сброс выделений во всех редакторах
+                document.querySelectorAll('.line-number.highlighted').forEach(el => {
+                    el.classList.remove('highlighted');
+                });
+                document.querySelectorAll('.code-line.highlighted').forEach(el => {
+                    el.classList.remove('highlighted');
+                });
+            }
+
+            function showNotification(message) {
+                notification.textContent = message;
+                notification.classList.add('show');
+                setTimeout(() => notification.classList.remove('show'), 3000);
+            }
+
+            // Выбор редакторов на начальном экране
             document.querySelectorAll('.editor-option').forEach(option => {
                 option.addEventListener('click', function() {
                     const editor = this.getAttribute('data-editor');
                     selectedEditors[editor] = !selectedEditors[editor];
                     this.classList.toggle('selected');
-                    
-                    const hasSelection = Object.values(selectedEditors).some(val => val);
-                    continueBtn.disabled = !hasSelection;
+                    continueBtn.disabled = !Object.values(selectedEditors).some(val => val);
                 });
             });
 
-            // Обработчик кнопки "Продолжить"
+            // Переход к редакторам
             continueBtn.addEventListener('click', function() {
                 selectionScreen.style.display = 'none';
                 editorScreen.style.display = 'flex';
                 createEditorTabs();
-                showFirstSelectedEditor();
-                initializeSyntaxHighlighting();
+                
+                // Инициализация выбранных редакторов
+                Object.keys(selectedEditors).forEach(editor => {
+                    if (selectedEditors[editor]) {
+                        initializeEditor(editor);
+                    }
+                });
             });
 
+            // Создание вкладок редакторов
             function createEditorTabs() {
                 editorTabs.innerHTML = '';
-                const editorsOrder = ['html', 'css', 'js'];
                 
-                editorsOrder.forEach(editor => {
+                ['html', 'css', 'js'].forEach(editor => {
                     if (selectedEditors[editor]) {
                         const tab = document.createElement('button');
                         tab.className = 'editor-tab';
-                        tab.textContent = getEditorDisplayName(editor);
+                        tab.textContent = getEditorName(editor);
                         tab.setAttribute('data-editor', editor);
-                        tab.addEventListener('click', switchEditorTab);
+                        tab.addEventListener('click', function() {
+                            // Активация вкладки
+                            document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
+                            document.querySelectorAll('.editor-container').forEach(c => c.classList.remove('active'));
+                            this.classList.add('active');
+                            document.getElementById(editor + '-editor').classList.add('active');
+                        });
                         editorTabs.appendChild(tab);
                     }
                 });
                 
-                if (editorTabs.firstChild) {
-                    editorTabs.firstChild.classList.add('active');
+                // Активация первой вкладки
+                const firstTab = editorTabs.querySelector('.editor-tab');
+                if (firstTab) {
+                    firstTab.click();
                 }
             }
 
-            function getEditorDisplayName(editor) {
-                const names = {
-                    'html': 'HTML',
-                    'css': 'CSS', 
-                    'js': 'JavaScript'
-                };
+            function getEditorName(editor) {
+                const names = { html: 'HTML', css: 'CSS', js: 'JavaScript' };
                 return names[editor] || editor;
             }
 
-            function switchEditorTab() {
-                document.querySelectorAll('.editor-tab').forEach(tab => {
-                    tab.classList.remove('active');
-                });
-                
-                this.classList.add('active');
-                
-                document.querySelectorAll('.editor-container').forEach(editor => {
-                    editor.classList.remove('active');
-                });
-                
-                const editorId = this.getAttribute('data-editor') + '-editor';
-                document.getElementById(editorId).classList.add('active');
-            }
+            // Поиск строки
+            lineSearchBtn.addEventListener('click', searchLine);
+            lineSearchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') searchLine();
+            });
 
-            function showFirstSelectedEditor() {
-                const editorsOrder = ['html', 'css', 'js'];
-                
-                for (const editor of editorsOrder) {
-                    if (selectedEditors[editor]) {
-                        const tabs = document.querySelectorAll('.editor-tab');
-                        for (const tab of tabs) {
-                            if (tab.getAttribute('data-editor') === editor) {
-                                tab.classList.add('active');
-                                break;
-                            }
-                        }
-                        document.getElementById(editor + '-editor').classList.add('active');
-                        break;
-                    }
-                }
-            }
-
-            function initializeSyntaxHighlighting() {
-                const editors = ['html', 'css', 'js'];
-                
-                editors.forEach(editor => {
-                    const textarea = document.getElementById(editor + '-code');
-                    const highlight = document.getElementById(editor + '-highlight');
-                    
-                    if (textarea && highlight) {
-                        const updateHighlight = () => {
-                            let code = textarea.value;
-                            let highlightedCode;
-                            
-                            try {
-                                switch(editor) {
-                                    case 'html':
-                                        highlightedCode = hljs.highlight(code, { language: 'xml' }).value;
-                                        break;
-                                    case 'css':
-                                        highlightedCode = hljs.highlight(code, { language: 'css' }).value;
-                                        break;
-                                    case 'js':
-                                        highlightedCode = hljs.highlight(code, { language: 'javascript' }).value;
-                                        break;
-                                    default:
-                                        highlightedCode = code;
-                                }
-                            } catch (e) {
-                                highlightedCode = code;
-                            }
-                            
-                            highlight.innerHTML = highlightedCode;
-                        };
-                        
-                        textarea.addEventListener('input', updateHighlight);
-                        textarea.addEventListener('scroll', () => {
-                            highlight.scrollTop = textarea.scrollTop;
-                            highlight.scrollLeft = textarea.scrollLeft;
-                        });
-                        
-                        updateHighlight();
-                    }
-                });
-            }
+            // Запуск кода
+            runButton.addEventListener('click', runCode);
 
             function runCode() {
                 const htmlCode = selectedEditors.html ? document.getElementById('html-code').value : '';
                 const cssCode = selectedEditors.css ? document.getElementById('css-code').value : '';
                 const jsCode = selectedEditors.js ? document.getElementById('js-code').value : '';
+
+                const previewDoc = preview.contentDocument || preview.contentWindow.document;
                 
-                const previewDocument = preview.contentDocument || preview.contentWindow.document;
-                
-                // Очищаем и добавляем начальное сообщение в консоль
-                consoleOutput.innerHTML = '';
-                const startMessage = document.createElement('div');
-                startMessage.className = 'console-line console-log';
-                startMessage.textContent = 'Начало консоли';
-                consoleOutput.appendChild(startMessage);
-                
+                // Очистка консоли
+                consoleState.logs = [];
+                updateConsole();
+
                 const fullHtml = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <meta charset="UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <style>
-                            ${cssCode}
-                            body {
-                                font-family: Arial, sans-serif;
-                                padding: 20px;
-                                line-height: 1.6;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        ${htmlCode || '<div style="text-align: center; padding: 50px; color: #666;">Напишите HTML код</div>'}
-                        <script>
-                            // Добавляем тестовое сообщение в консоль
-                            console.log('Код выполнен успешно!');
-                            
-                            const sendToParent = (type, args) => {
-                                window.parent.postMessage({
-                                    type: 'console',
-                                    method: type,
-                                    args: Array.from(args).map(arg => {
-                                        if (typeof arg === 'object') {
-                                            try {
-                                                return JSON.stringify(arg, null, 2);
-                                            } catch {
-                                                return String(arg);
-                                            }
-                                        }
-                                        return String(arg);
-                                    })
-                                }, '*');
-                            };
-                            
-                            const originalConsole = {
-                                log: console.log,
-                                error: console.error,
-                                warn: console.warn,
-                                info: console.info,
-                                debug: console.debug
-                            };
-                            
-                            console.log = function(...args) {
-                                originalConsole.log.apply(console, args);
-                                sendToParent('log', args);
-                            };
-                            
-                            console.error = function(...args) {
-                                originalConsole.error.apply(console, args);
-                                sendToParent('error', args);
-                            };
-                            
-                            console.warn = function(...args) {
-                                originalConsole.warn.apply(console, args);
-                                sendToParent('warn', args);
-                            };
-                            
-                            console.info = function(...args) {
-                                originalConsole.info.apply(console, args);
-                                sendToParent('info', args);
-                            };
-                            
-                            console.debug = function(...args) {
-                                originalConsole.debug.apply(console, args);
-                                sendToParent('debug', args);
-                            };
-                            
-                            window.addEventListener('error', function(e) {
-                                sendToParent('error', ['Uncaught ' + (e.error?.name || 'Error') + ': ' + e.message + ' at ' + e.filename + ':' + e.lineno]);
-                            });
-                            
-                            window.addEventListener('unhandledrejection', function(e) {
-                                sendToParent('error', ['Unhandled Promise Rejection: ' + e.reason]);
-                            });
-                            
-                            ${jsCode}
-                        <\/script>
-                    </body>
-                    </html>
-                `;
-                
-                previewDocument.open();
-                previewDocument.write(fullHtml);
-                previewDocument.close();
-                
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>${cssCode}</style>
+</head>
+<body>${htmlCode || '<div>Напишите HTML код</div>'}
+<script>
+    // Перехват console.log
+    const originalLog = console.log;
+    const originalError = console.error;
+    
+    console.log = function(...args) {
+        originalLog.apply(console, args);
+        window.parent.postMessage({ type: 'console', method: 'log', args: args }, '*');
+    };
+    
+    console.error = function(...args) {
+        originalError.apply(console, args);
+        window.parent.postMessage({ type: 'console', method: 'error', args: args }, '*');
+    };
+    
+    // Обработка ошибок
+    window.addEventListener('error', function(e) {
+        window.parent.postMessage({ 
+            type: 'console', 
+            method: 'error', 
+            args: ['Ошибка: ' + e.message] 
+        }, '*');
+    });
+    
+    ${jsCode}
+<\/script>
+</body>
+</html>`;
+
+                previewDoc.open();
+                previewDoc.write(fullHtml);
+                previewDoc.close();
+
                 previewFullscreen.style.display = 'block';
             }
 
-            // Обработчик сообщений из iframe
+            // Обработка сообщений из iframe
             window.addEventListener('message', function(e) {
                 if (e.data && e.data.type === 'console') {
-                    const timestamp = new Date().toLocaleTimeString();
-                    const line = document.createElement('div');
-                    line.className = 'console-line console-' + e.data.method;
-                    line.innerHTML = '<span style="color: #666">[' + timestamp + ']</span> ' + e.data.args.join(' ');
-                    consoleOutput.appendChild(line);
-                    consoleOutput.scrollTop = consoleOutput.scrollHeight;
+                    consoleState.logs.push({
+                        method: e.data.method,
+                        args: e.data.args,
+                        timestamp: new Date().toLocaleTimeString()
+                    });
+                    updateConsole();
                 }
             });
 
-            runButton.addEventListener('click', runCode);
-            
+            // Обновление консоли
+            function updateConsole() {
+                consoleOutput.innerHTML = '';
+                consoleState.logs.forEach(log => {
+                    if (!consoleState.activeLevels.has('all') && !consoleState.activeLevels.has(log.method)) {
+                        return;
+                    }
+                    
+                    if (consoleState.filterText && !log.args.join(' ').toLowerCase().includes(consoleState.filterText.toLowerCase())) {
+                        return;
+                    }
+
+                    const line = document.createElement('div');
+                    line.className = `console-line console-${log.method}`;
+                    line.innerHTML = `<span class="console-timestamp">${log.timestamp}</span> ${log.args.join(' ')}`;
+                    consoleOutput.appendChild(line);
+                });
+                
+                consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            }
+
+            // Управление консолью
+            consoleToggle.addEventListener('click', function() {
+                consolePanel.classList.toggle('active');
+                this.classList.toggle('active');
+            });
+
+            clearConsole.addEventListener('click', function() {
+                consoleState.logs = [];
+                updateConsole();
+            });
+
+            document.querySelectorAll('.level-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    const level = this.getAttribute('data-level');
+                    
+                    if (this.classList.contains('active')) {
+                        consoleState.activeLevels.add(level);
+                    } else {
+                        consoleState.activeLevels.delete(level);
+                    }
+                    
+                    updateConsole();
+                });
+            });
+
+            document.getElementById('consoleFilter').addEventListener('input', function() {
+                consoleState.filterText = this.value;
+                updateConsole();
+            });
+
+            // Закрытие превью
             closePreview.addEventListener('click', function() {
                 previewFullscreen.style.display = 'none';
                 consolePanel.classList.remove('active');
                 consoleToggle.classList.remove('active');
             });
-            
-            consoleToggle.addEventListener('click', function() {
-                consolePanel.classList.toggle('active');
-                consoleToggle.classList.toggle('active');
-            });
-            
-            clearConsole.addEventListener('click', function() {
-                consoleOutput.innerHTML = '';
-            });
-            
-            copyConsole.addEventListener('click', function() {
-                const text = consoleOutput.innerText;
-                navigator.clipboard.writeText(text).then(() => {
-                    const originalText = copyConsole.textContent;
-                    copyConsole.textContent = 'Скопировано!';
-                    setTimeout(() => {
-                        copyConsole.textContent = originalText;
-                    }, 2000);
-                }).catch(err => {
-                    console.error('Ошибка копирования:', err);
-                });
-            });
-            
+
+            // Горячие клавиши
             document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'Enter') {
+                    e.preventDefault();
+                    runCode();
+                }
+                
                 if (e.key === 'Escape' && previewFullscreen.style.display === 'block') {
                     previewFullscreen.style.display = 'none';
-                    consolePanel.classList.remove('active');
-                    consoleToggle.classList.remove('active');
                 }
+            });
+
+            // Кнопки очистки
+            document.querySelectorAll('.clear-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const editor = this.getAttribute('data-editor');
+                    const textarea = document.getElementById(editor + '-code');
+                    if (textarea) {
+                        textarea.value = '';
+                        initializeEditor(editor);
+                    }
+                });
             });
         });
     </script>
