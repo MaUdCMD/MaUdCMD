@@ -548,6 +548,16 @@
             cursor: pointer;
             font-size: 0.8rem;
         }
+
+        .copy-console-btn {
+            padding: 4px 8px;
+            background: #444;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
         
         .console-output {
             flex: 1;
@@ -557,6 +567,10 @@
             font-size: 13px;
             background: #1a1a1a;
             white-space: pre-wrap;
+            user-select: text;
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
         }
         
         .console-line {
@@ -564,12 +578,47 @@
             line-height: 1.4;
             padding: 2px 5px;
             border-radius: 3px;
+            cursor: text;
+            user-select: text;
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+        }
+        
+        .console-line:hover {
+            background: #2a2a2a;
         }
         
         .console-timestamp {
             color: #666;
             font-size: 0.75rem;
             margin-right: 10px;
+            user-select: none;
+        }
+
+        .console-log { color: #ffffff; }
+        .console-error { color: #ff4444; }
+        .console-warn { color: #ffaa00; }
+        .console-info { color: #8888ff; }
+        .console-debug { color: #888888; }
+
+        .copy-notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #8a2be2;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            z-index: 1001;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .copy-notification.show {
+            opacity: 1;
         }
     </style>
 </head>
@@ -675,9 +724,13 @@
                         <div class="console-levels">
                             <button class="level-btn active" data-level="all">All</button>
                             <button class="level-btn active" data-level="log">Log</button>
+                            <button class="level-btn active" data-level="warn">Warn</button>
                             <button class="level-btn active" data-level="error">Error</button>
+                            <button class="level-btn active" data-level="info">Info</button>
+                            <button class="level-btn active" data-level="debug">Debug</button>
                         </div>
                         <button class="console-btn-small" id="clearConsole">Очистить</button>
+                        <button class="copy-console-btn" id="copyConsole">Копировать</button>
                     </div>
                 </div>
                 <div class="console-output" id="consoleOutput"></div>
@@ -686,6 +739,7 @@
     </div>
 
     <div class="notification" id="notification">Строка не найдена</div>
+    <div class="copy-notification" id="copyNotification">Текст консоли скопирован!</div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -702,15 +756,17 @@
             const consolePanel = document.getElementById('consolePanel');
             const consoleOutput = document.getElementById('consoleOutput');
             const clearConsole = document.getElementById('clearConsole');
+            const copyConsole = document.getElementById('copyConsole');
             const lineSearchInput = document.getElementById('lineSearchInput');
             const lineSearchBtn = document.getElementById('lineSearchBtn');
             const notification = document.getElementById('notification');
+            const copyNotification = document.getElementById('copyNotification');
 
             // Состояние приложения
             const selectedEditors = { html: false, css: false, js: false };
             const consoleState = {
                 logs: [],
-                activeLevels: new Set(['all', 'log', 'error']),
+                activeLevels: new Set(['all', 'log', 'warn', 'error', 'info', 'debug']),
                 filterText: ''
             };
 
@@ -871,6 +927,47 @@
                 setTimeout(() => notification.classList.remove('show'), 3000);
             }
 
+            function showCopyNotification() {
+                copyNotification.classList.add('show');
+                setTimeout(() => copyNotification.classList.remove('show'), 2000);
+            }
+
+            // КОПИРОВАНИЕ ТЕКСТА ИЗ КОНСОЛИ
+            function copyConsoleText() {
+                const textToCopy = getConsoleText();
+                if (textToCopy) {
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        showCopyNotification();
+                    }).catch(err => {
+                        // Fallback для старых браузеров
+                        const textArea = document.createElement('textarea');
+                        textArea.value = textToCopy;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        showCopyNotification();
+                    });
+                }
+            }
+
+            function getConsoleText() {
+                let consoleText = '';
+                consoleState.logs.forEach(log => {
+                    if (!consoleState.activeLevels.has('all') && !consoleState.activeLevels.has(log.method)) {
+                        return;
+                    }
+                    
+                    if (consoleState.filterText && !log.args.join(' ').toLowerCase().includes(consoleState.filterText.toLowerCase())) {
+                        return;
+                    }
+
+                    const timestamp = new Date(log.timestamp).toLocaleTimeString();
+                    consoleText += `${timestamp} ${log.method.toUpperCase()}: ${log.args.join(' ')}\n`;
+                });
+                return consoleText.trim();
+            }
+
             // Выбор редакторов на начальном экране
             document.querySelectorAll('.editor-option').forEach(option => {
                 option.addEventListener('click', function() {
@@ -953,35 +1050,148 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <style>${cssCode}</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        ${cssCode}
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+        }
+    </style>
 </head>
-<body>${htmlCode || '<div>Напишите HTML код</div>'}
-<script>
-    // Перехват console.log
-    const originalLog = console.log;
-    const originalError = console.error;
-    
-    console.log = function(...args) {
-        originalLog.apply(console, args);
-        window.parent.postMessage({ type: 'console', method: 'log', args: args }, '*');
-    };
-    
-    console.error = function(...args) {
-        originalError.apply(console, args);
-        window.parent.postMessage({ type: 'console', method: 'error', args: args }, '*');
-    };
-    
-    // Обработка ошибок
-    window.addEventListener('error', function(e) {
-        window.parent.postMessage({ 
-            type: 'console', 
-            method: 'error', 
-            args: ['Ошибка: ' + e.message] 
-        }, '*');
-    });
-    
-    ${jsCode}
-<\/script>
+<body>
+    ${htmlCode || '<div style="text-align: center; padding: 50px; color: #666;">Напишите HTML код</div>'}
+    <script>
+        // ПОЛНЫЙ ПЕРЕХВАТ ВСЕХ МЕТОДОВ КОНСОЛИ
+        (function() {
+            const originalConsole = {
+                log: console.log,
+                error: console.error,
+                warn: console.warn,
+                info: console.info,
+                debug: console.debug,
+                table: console.table,
+                dir: console.dir,
+                time: console.time,
+                timeEnd: console.timeEnd,
+                count: console.count,
+                assert: console.assert,
+                clear: console.clear,
+                group: console.group,
+                groupEnd: console.groupEnd,
+                groupCollapsed: console.groupCollapsed,
+                trace: console.trace
+            };
+
+            // Функция для отправки сообщений в родительское окно
+            const sendToConsole = (method, args) => {
+                try {
+                    window.parent.postMessage({
+                        type: 'console',
+                        method: method,
+                        args: Array.from(args).map(arg => {
+                            if (typeof arg === 'object' && arg !== null) {
+                                try {
+                                    if (arg instanceof Error) {
+                                        return arg.toString() + '\\n' + arg.stack;
+                                    }
+                                    if (arg instanceof HTMLElement) {
+                                        return arg.outerHTML;
+                                    }
+                                    if (Array.isArray(arg)) {
+                                        return '[' + arg.map(item => 
+                                            typeof item === 'object' ? JSON.stringify(item) : String(item)
+                                        ).join(', ') + ']';
+                                    }
+                                    return JSON.stringify(arg, null, 2);
+                                } catch (e) {
+                                    return String(arg);
+                                }
+                            }
+                            return String(arg);
+                        })
+                    }, '*');
+                } catch (e) {
+                    // Игнорируем ошибки отправки
+                }
+            };
+
+            // Перехватываем все методы консоли
+            const methods = ['log', 'error', 'warn', 'info', 'debug', 'table', 'dir', 'time', 'timeEnd', 'count', 'assert', 'group', 'groupEnd', 'groupCollapsed', 'trace'];
+            
+            methods.forEach(method => {
+                console[method] = function(...args) {
+                    // Вызываем оригинальный метод
+                    try {
+                        originalConsole[method].apply(console, args);
+                    } catch (e) {
+                        // Игнорируем ошибки в оригинальной консоли
+                    }
+                    
+                    // Отправляем в нашу консоль
+                    sendToConsole(method, args);
+                };
+            });
+
+            // Особый случай для console.clear
+            console.clear = function() {
+                originalConsole.clear.call(console);
+                sendToConsole('clear', ['Console cleared']);
+            };
+
+            // Перехват всех ошибок JavaScript
+            window.addEventListener('error', function(e) {
+                sendToConsole('error', [
+                    'Uncaught ' + (e.error?.name || 'Error') + ': ' + e.message + 
+                    '\\nAt: ' + e.filename + ':' + e.lineno + ':' + e.colno +
+                    (e.error?.stack ? '\\nStack: ' + e.error.stack : '')
+                ]);
+            });
+
+            // Перехват необработанных Promise rejections
+            window.addEventListener('unhandledrejection', function(e) {
+                sendToConsole('error', [
+                    'Unhandled Promise Rejection: ' + e.reason +
+                    (e.reason?.stack ? '\\nStack: ' + e.reason.stack : '')
+                ]);
+            });
+
+            // Перехват console.table и преобразование в читаемый формат
+            const originalTable = console.table;
+            console.table = function(data) {
+                originalTable.call(console, data);
+                if (Array.isArray(data)) {
+                    const tableData = data.map(item => {
+                        if (typeof item === 'object') {
+                            return JSON.stringify(item, null, 2);
+                        }
+                        return String(item);
+                    });
+                    sendToConsole('table', ['Array:', ...tableData]);
+                } else if (typeof data === 'object') {
+                    const tableData = Object.entries(data).map(([key, value]) => {
+                        return key + ': ' + (typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value));
+                    });
+                    sendToConsole('table', ['Object:', ...tableData]);
+                } else {
+                    sendToConsole('table', [String(data)]);
+                }
+            };
+
+        })();
+
+        // Запускаем пользовательский код
+        try {
+            ${jsCode}
+        } catch (e) {
+            console.error('Execution error:', e);
+        }
+
+        // Логируем информацию о загрузке страницы
+        console.log('Page loaded successfully');
+        console.info('DOM ready at:', new Date().toLocaleTimeString());
+    <\/script>
 </body>
 </html>`;
 
@@ -990,6 +1200,14 @@
                 previewDoc.close();
 
                 previewFullscreen.style.display = 'block';
+                
+                // Автоматически открываем консоль если есть JS код
+                if (jsCode.trim()) {
+                    setTimeout(() => {
+                        consolePanel.classList.add('active');
+                        consoleToggle.classList.add('active');
+                    }, 500);
+                }
             }
 
             // Обработка сообщений из iframe
@@ -998,7 +1216,7 @@
                     consoleState.logs.push({
                         method: e.data.method,
                         args: e.data.args,
-                        timestamp: new Date().toLocaleTimeString()
+                        timestamp: Date.now()
                     });
                     updateConsole();
                 }
@@ -1007,21 +1225,32 @@
             // Обновление консоли
             function updateConsole() {
                 consoleOutput.innerHTML = '';
-                consoleState.logs.forEach(log => {
+                
+                const filteredLogs = consoleState.logs.filter(log => {
                     if (!consoleState.activeLevels.has('all') && !consoleState.activeLevels.has(log.method)) {
-                        return;
+                        return false;
                     }
                     
-                    if (consoleState.filterText && !log.args.join(' ').toLowerCase().includes(consoleState.filterText.toLowerCase())) {
-                        return;
+                    if (consoleState.filterText) {
+                        const text = log.args.join(' ').toLowerCase();
+                        return text.includes(consoleState.filterText.toLowerCase());
                     }
+                    
+                    return true;
+                });
 
+                filteredLogs.forEach(log => {
                     const line = document.createElement('div');
                     line.className = `console-line console-${log.method}`;
-                    line.innerHTML = `<span class="console-timestamp">${log.timestamp}</span> ${log.args.join(' ')}`;
+                    
+                    const timestamp = new Date(log.timestamp).toLocaleTimeString();
+                    const content = log.args.join(' ');
+                    
+                    line.innerHTML = `<span class="console-timestamp">${timestamp}</span> ${content}`;
                     consoleOutput.appendChild(line);
                 });
                 
+                // Автопрокрутка к последнему сообщению
                 consoleOutput.scrollTop = consoleOutput.scrollHeight;
             }
 
@@ -1035,6 +1264,8 @@
                 consoleState.logs = [];
                 updateConsole();
             });
+
+            copyConsole.addEventListener('click', copyConsoleText);
 
             document.querySelectorAll('.level-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
