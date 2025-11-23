@@ -305,7 +305,7 @@
             width: 100%;
             height: 100%;
             background: transparent;
-            color: #ffffff;
+            color: transparent; /* Сделаем текст невидимым */
             border: none;
             padding: 15px;
             font-family: 'Courier New', monospace;
@@ -791,7 +791,7 @@
                 }
             }
 
-            // Инициализация редакторов
+            // ИСПРАВЛЕННАЯ ИНИЦИАЛИЗАЦИЯ РЕДАКТОРОВ
             function initializeEditor(editorType) {
                 const textarea = document.getElementById(editorType + '-code');
                 const highlight = document.getElementById(editorType + '-highlight');
@@ -836,11 +836,13 @@
                     }
                 });
 
+                // УПРОЩЕННАЯ ОБРАБОТКА КЛАВИШ - только Tab
                 textarea.addEventListener('keydown', function(e) {
                     if (e.key === 'Tab') {
                         e.preventDefault();
                         const start = this.selectionStart;
                         const end = this.selectionEnd;
+                        
                         this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
                         this.selectionStart = this.selectionEnd = start + 4;
                         updateEditor();
@@ -968,6 +970,61 @@
                 return consoleText.trim();
             }
 
+            // ФИЛЬТРАЦИЯ КОНСОЛИ
+            function updateConsole() {
+                consoleOutput.innerHTML = '';
+                
+                const filteredLogs = consoleState.logs.filter(log => {
+                    // Проверяем фильтр по типу сообщения
+                    const levelMatch = consoleState.activeLevels.has('all') || consoleState.activeLevels.has(log.method);
+                    
+                    // Проверяем текстовый фильтр
+                    const textMatch = !consoleState.filterText || 
+                        log.args.join(' ').toLowerCase().includes(consoleState.filterText.toLowerCase());
+                    
+                    return levelMatch && textMatch;
+                });
+
+                filteredLogs.forEach(log => {
+                    const line = document.createElement('div');
+                    line.className = `console-line console-${log.method}`;
+                    
+                    const timestamp = new Date(log.timestamp).toLocaleTimeString();
+                    const content = log.args.join(' ');
+                    
+                    line.innerHTML = `<span class="console-timestamp">${timestamp}</span> ${content}`;
+                    consoleOutput.appendChild(line);
+                });
+                
+                // Автопрокрутка к последнему сообщению
+                consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            }
+
+            // ИНИЦИАЛИЗАЦИЯ ФИЛЬТРОВ КОНСОЛИ
+            function initializeConsoleFilters() {
+                // Обработчики для кнопок фильтрации по уровням
+                document.querySelectorAll('.level-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        this.classList.toggle('active');
+                        const level = this.getAttribute('data-level');
+                        
+                        if (this.classList.contains('active')) {
+                            consoleState.activeLevels.add(level);
+                        } else {
+                            consoleState.activeLevels.delete(level);
+                        }
+                        
+                        updateConsole();
+                    });
+                });
+
+                // Обработчик для текстового фильтра
+                document.getElementById('consoleFilter').addEventListener('input', function() {
+                    consoleState.filterText = this.value;
+                    updateConsole();
+                });
+            }
+
             // Выбор редакторов на начальном экране
             document.querySelectorAll('.editor-option').forEach(option => {
                 option.addEventListener('click', function() {
@@ -990,6 +1047,9 @@
                         initializeEditor(editor);
                     }
                 });
+
+                // Инициализация фильтров консоли
+                initializeConsoleFilters();
             });
 
             // Создание вкладок редакторов
@@ -1063,28 +1123,16 @@
 <body>
     ${htmlCode || '<div style="text-align: center; padding: 50px; color: #666;">Напишите HTML код</div>'}
     <script>
-        // ПОЛНЫЙ ПЕРЕХВАТ ВСЕХ МЕТОДОВ КОНСОЛИ
+        // Перехват консоли
         (function() {
             const originalConsole = {
                 log: console.log,
                 error: console.error,
                 warn: console.warn,
                 info: console.info,
-                debug: console.debug,
-                table: console.table,
-                dir: console.dir,
-                time: console.time,
-                timeEnd: console.timeEnd,
-                count: console.count,
-                assert: console.assert,
-                clear: console.clear,
-                group: console.group,
-                groupEnd: console.groupEnd,
-                groupCollapsed: console.groupCollapsed,
-                trace: console.trace
+                debug: console.debug
             };
 
-            // Функция для отправки сообщений в родительское окно
             const sendToConsole = (method, args) => {
                 try {
                     window.parent.postMessage({
@@ -1093,17 +1141,6 @@
                         args: Array.from(args).map(arg => {
                             if (typeof arg === 'object' && arg !== null) {
                                 try {
-                                    if (arg instanceof Error) {
-                                        return arg.toString() + '\\n' + arg.stack;
-                                    }
-                                    if (arg instanceof HTMLElement) {
-                                        return arg.outerHTML;
-                                    }
-                                    if (Array.isArray(arg)) {
-                                        return '[' + arg.map(item => 
-                                            typeof item === 'object' ? JSON.stringify(item) : String(item)
-                                        ).join(', ') + ']';
-                                    }
                                     return JSON.stringify(arg, null, 2);
                                 } catch (e) {
                                     return String(arg);
@@ -1117,67 +1154,19 @@
                 }
             };
 
-            // Перехватываем все методы консоли
-            const methods = ['log', 'error', 'warn', 'info', 'debug', 'table', 'dir', 'time', 'timeEnd', 'count', 'assert', 'group', 'groupEnd', 'groupCollapsed', 'trace'];
-            
-            methods.forEach(method => {
+            ['log', 'error', 'warn', 'info', 'debug'].forEach(method => {
                 console[method] = function(...args) {
-                    // Вызываем оригинальный метод
                     try {
                         originalConsole[method].apply(console, args);
-                    } catch (e) {
-                        // Игнорируем ошибки в оригинальной консоли
-                    }
+                    } catch (e) {}
                     
-                    // Отправляем в нашу консоль
                     sendToConsole(method, args);
                 };
             });
 
-            // Особый случай для console.clear
-            console.clear = function() {
-                originalConsole.clear.call(console);
-                sendToConsole('clear', ['Console cleared']);
-            };
-
-            // Перехват всех ошибок JavaScript
             window.addEventListener('error', function(e) {
-                sendToConsole('error', [
-                    'Uncaught ' + (e.error?.name || 'Error') + ': ' + e.message + 
-                    '\\nAt: ' + e.filename + ':' + e.lineno + ':' + e.colno +
-                    (e.error?.stack ? '\\nStack: ' + e.error.stack : '')
-                ]);
+                sendToConsole('error', ['Uncaught Error: ' + e.message]);
             });
-
-            // Перехват необработанных Promise rejections
-            window.addEventListener('unhandledrejection', function(e) {
-                sendToConsole('error', [
-                    'Unhandled Promise Rejection: ' + e.reason +
-                    (e.reason?.stack ? '\\nStack: ' + e.reason.stack : '')
-                ]);
-            });
-
-            // Перехват console.table и преобразование в читаемый формат
-            const originalTable = console.table;
-            console.table = function(data) {
-                originalTable.call(console, data);
-                if (Array.isArray(data)) {
-                    const tableData = data.map(item => {
-                        if (typeof item === 'object') {
-                            return JSON.stringify(item, null, 2);
-                        }
-                        return String(item);
-                    });
-                    sendToConsole('table', ['Array:', ...tableData]);
-                } else if (typeof data === 'object') {
-                    const tableData = Object.entries(data).map(([key, value]) => {
-                        return key + ': ' + (typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value));
-                    });
-                    sendToConsole('table', ['Object:', ...tableData]);
-                } else {
-                    sendToConsole('table', [String(data)]);
-                }
-            };
 
         })();
 
@@ -1187,10 +1176,6 @@
         } catch (e) {
             console.error('Execution error:', e);
         }
-
-        // Логируем информацию о загрузке страницы
-        console.log('Page loaded successfully');
-        console.info('DOM ready at:', new Date().toLocaleTimeString());
     <\/script>
 </body>
 </html>`;
@@ -1222,38 +1207,6 @@
                 }
             });
 
-            // Обновление консоли
-            function updateConsole() {
-                consoleOutput.innerHTML = '';
-                
-                const filteredLogs = consoleState.logs.filter(log => {
-                    if (!consoleState.activeLevels.has('all') && !consoleState.activeLevels.has(log.method)) {
-                        return false;
-                    }
-                    
-                    if (consoleState.filterText) {
-                        const text = log.args.join(' ').toLowerCase();
-                        return text.includes(consoleState.filterText.toLowerCase());
-                    }
-                    
-                    return true;
-                });
-
-                filteredLogs.forEach(log => {
-                    const line = document.createElement('div');
-                    line.className = `console-line console-${log.method}`;
-                    
-                    const timestamp = new Date(log.timestamp).toLocaleTimeString();
-                    const content = log.args.join(' ');
-                    
-                    line.innerHTML = `<span class="console-timestamp">${timestamp}</span> ${content}`;
-                    consoleOutput.appendChild(line);
-                });
-                
-                // Автопрокрутка к последнему сообщению
-                consoleOutput.scrollTop = consoleOutput.scrollHeight;
-            }
-
             // Управление консолью
             consoleToggle.addEventListener('click', function() {
                 consolePanel.classList.toggle('active');
@@ -1266,26 +1219,6 @@
             });
 
             copyConsole.addEventListener('click', copyConsoleText);
-
-            document.querySelectorAll('.level-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.toggle('active');
-                    const level = this.getAttribute('data-level');
-                    
-                    if (this.classList.contains('active')) {
-                        consoleState.activeLevels.add(level);
-                    } else {
-                        consoleState.activeLevels.delete(level);
-                    }
-                    
-                    updateConsole();
-                });
-            });
-
-            document.getElementById('consoleFilter').addEventListener('input', function() {
-                consoleState.filterText = this.value;
-                updateConsole();
-            });
 
             // Закрытие превью
             closePreview.addEventListener('click', function() {
